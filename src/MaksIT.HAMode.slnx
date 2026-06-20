@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="MaksIT.HAMode.Abstractions/MaksIT.HAMode.Abstractions.csproj" />
+  <Project Path="MaksIT.HAMode.Etcd/MaksIT.HAMode.Etcd.csproj" />
+  <Project Path="MaksIT.HAMode.PostgreSql/MaksIT.HAMode.PostgreSql.csproj" />
+  <Project Path="MaksIT.HAMode.Redis/MaksIT.HAMode.Redis.csproj" />
+  <Project Path="MaksIT.HAMode.Tests/MaksIT.HAMode.Tests.csproj" />
+  <Project Path="MaksIT.HAMode/MaksIT.HAMode.csproj" />
+</Solution>

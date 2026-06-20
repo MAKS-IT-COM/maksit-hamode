@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <PackageId>MaksIT.HAMode.PostgreSql</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Maksym Sadovnychyy</Authors>
+    <Company>MAKS-IT</Company>
+    <Product>MaksIT.HAMode</Product>
+    <Copyright>Copyright © Maksym Sadovnychyy (MAKS-IT)</Copyright>
+    <Description>PostgreSQL runtime lease implementation for MaksIT HA mode, based on app_runtime_leases coordination table.</Description>
+    <PackageTags>dotnet;ha;high-availability;runtime;lease;coordination;postgresql;npgsql;kubernetes</PackageTags>
+    <PackageProjectUrl>https://github.com/MAKS-IT-COM/maksit-hamode</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MAKS-IT-COM/maksit-hamode</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReleaseNotes>See CHANGELOG.md in the package and repository releases.</PackageReleaseNotes>
+    <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MaksIT.Results" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MaksIT.HAMode.Abstractions\MaksIT.HAMode.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" Link="LICENSE.md" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+</Project>

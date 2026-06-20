@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <PackageId>MaksIT.HAMode</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Maksym Sadovnychyy</Authors>
+    <Company>MAKS-IT</Company>
+    <Product>MaksIT.HAMode</Product>
+    <Copyright>Copyright © Maksym Sadovnychyy (MAKS-IT)</Copyright>
+    <Description>Unified HA runtime coordination package for MaksIT services: abstractions and PostgreSQL, Redis, and etcd lease implementations.</Description>
+    <PackageTags>dotnet;ha;high-availability;runtime;lease;coordination;postgresql;redis;etcd;kubernetes</PackageTags>
+    <PackageProjectUrl>https://github.com/MAKS-IT-COM/maksit-hamode</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MAKS-IT-COM/maksit-hamode</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReleaseNotes>See CHANGELOG.md in the package and repository releases.</PackageReleaseNotes>
+    <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MaksIT.HAMode.Abstractions\MaksIT.HAMode.Abstractions.csproj" />
+    <ProjectReference Include="..\MaksIT.HAMode.PostgreSql\MaksIT.HAMode.PostgreSql.csproj" />
+    <ProjectReference Include="..\MaksIT.HAMode.Redis\MaksIT.HAMode.Redis.csproj" />
+    <ProjectReference Include="..\MaksIT.HAMode.Etcd\MaksIT.HAMode.Etcd.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dotnet-etcd" Version="8.1.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.33.2" />
+    <PackageReference Include="MaksIT.Results" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Npgsql" Version="10.0.3" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\MaksIT.HAMode.Abstractions\bin\$(Configuration)\$(TargetFramework)\MaksIT.HAMode.Abstractions.*"
+          Pack="true"
+          PackagePath="lib\$(TargetFramework)\" />
+    <None Include="..\MaksIT.HAMode.PostgreSql\bin\$(Configuration)\$(TargetFramework)\MaksIT.HAMode.PostgreSql.*"
+          Pack="true"
+          PackagePath="lib\$(TargetFramework)\" />
+    <None Include="..\MaksIT.HAMode.Redis\bin\$(Configuration)\$(TargetFramework)\MaksIT.HAMode.Redis.*"
+          Pack="true"
+          PackagePath="lib\$(TargetFramework)\" />
+    <None Include="..\MaksIT.HAMode.Etcd\bin\$(Configuration)\$(TargetFramework)\MaksIT.HAMode.Etcd.*"
+          Pack="true"
+          PackagePath="lib\$(TargetFramework)\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" Link="LICENSE.md" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+</Project>
