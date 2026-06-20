@@ -6,10 +6,9 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <IncludeBuildOutput>true</IncludeBuildOutput>
 
     <PackageId>MaksIT.HAMode</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Maksym Sadovnychyy</Authors>
     <Company>MAKS-IT</Company>
     <Product>MaksIT.HAMode</Product>
@@ -32,16 +31,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MaksIT.HAMode.Abstractions\MaksIT.HAMode.Abstractions.csproj" PrivateAssets="all" TreatAsPackageReference="false" />
-    <ProjectReference Include="..\MaksIT.HAMode.PostgreSql\MaksIT.HAMode.PostgreSql.csproj" PrivateAssets="all" TreatAsPackageReference="false" />
-    <ProjectReference Include="..\MaksIT.HAMode.Redis\MaksIT.HAMode.Redis.csproj" PrivateAssets="all" TreatAsPackageReference="false" />
-    <ProjectReference Include="..\MaksIT.HAMode.Etcd\MaksIT.HAMode.Etcd.csproj" PrivateAssets="all" TreatAsPackageReference="false" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="dotnet-etcd" Version="8.1.0" />
     <PackageReference Include="Google.Protobuf" Version="3.35.1" />
     <PackageReference Include="MaksIT.Results" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="11.0.0-preview.5.26302.115" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-preview.5.26302.115" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="StackExchange.Redis" Version="3.0.47-preview" />

@@ -13,8 +13,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.5.26302.115" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="11.0.0-preview.5.26302.115" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MaksIT.HAMode.Abstractions\MaksIT.HAMode.Abstractions.csproj" />
-    <ProjectReference Include="..\MaksIT.HAMode.PostgreSql\MaksIT.HAMode.PostgreSql.csproj" />
-    <ProjectReference Include="..\MaksIT.HAMode.Redis\MaksIT.HAMode.Redis.csproj" />
-    <ProjectReference Include="..\MaksIT.HAMode.Etcd\MaksIT.HAMode.Etcd.csproj" />
     <ProjectReference Include="..\MaksIT.HAMode\MaksIT.HAMode.csproj" />
   </ItemGroup>
 

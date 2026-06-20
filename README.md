@@ -6,7 +6,7 @@ Reusable high-availability runtime coordination library for MaksIT services.
 
 ## Packages
 
-- `MaksIT.HAMode` (single NuGet package)
+- `MaksIT.HAMode` (single NuGet package, single assembly)
   - `MaksIT.HAMode.Extensions.ServiceCollectionExtensions`
   - `MaksIT.HAMode.Abstractions` namespace:
     - `IRuntimeInstanceId`
