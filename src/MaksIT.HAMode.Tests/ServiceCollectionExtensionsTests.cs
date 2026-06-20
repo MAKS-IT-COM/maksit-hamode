@@ -20,6 +20,94 @@ public sealed class ServiceCollectionExtensionsTests {
     var instanceId = provider.GetRequiredService<IRuntimeInstanceId>();
 
     Assert.IsType<RuntimeInstanceIdProvider>(instanceId);
+    Assert.Same(typeof(RuntimeInstanceIdProvider).Assembly, instanceId.GetType().Assembly);
+  }
+
+  [Fact]
+  public void AddHAModePostgreSqlLease_WithGenericProvider_RegistersLeaseServiceOnly() {
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModePostgreSqlLease<TestPgProvider>();
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.IsType<TestPgProvider>(provider.GetRequiredService<IRuntimeLeaseConnectionStringProvider>());
+    Assert.IsType<RuntimeLeaseServiceNpgsql>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
+  }
+
+  [Fact]
+  public void AddHAModeRedisLease_WithGenericProvider_RegistersLeaseServiceOnly() {
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModeRedisLease<TestRedisProvider>();
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.IsType<TestRedisProvider>(provider.GetRequiredService<IRuntimeLeaseRedisConnectionProvider>());
+    Assert.IsType<RuntimeLeaseServiceRedis>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
+  }
+
+  [Fact]
+  public void AddHAModeEtcdLease_WithGenericProvider_RegistersLeaseServiceOnly() {
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModeEtcdLease<TestEtcdProvider>();
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.IsType<TestEtcdProvider>(provider.GetRequiredService<IRuntimeLeaseEtcdConnectionProvider>());
+    Assert.IsType<RuntimeLeaseServiceEtcd>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
+  }
+
+  [Fact]
+  public void AddHAModePostgreSqlLease_WithSharedDataSource_RegistersLeaseServiceOnly() {
+    var configuration = new TestPgProvider();
+    var dataSource = NpgsqlDataSource.Create("Host=127.0.0.1;Port=5432;Database=hamode;Username=hamode;Password=hamode");
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModePostgreSqlLease(configuration, dataSource);
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.Same(configuration, provider.GetRequiredService<IRuntimeLeaseConnectionStringProvider>());
+    Assert.Same(dataSource, provider.GetRequiredService<NpgsqlDataSource>());
+    Assert.IsType<RuntimeLeaseServiceNpgsql>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
+  }
+
+  [Fact]
+  public void AddHAModeRedisLease_WithSharedMultiplexer_RegistersLeaseServiceOnly() {
+    var configuration = new TestRedisProvider();
+    var multiplexer = ConnectionMultiplexer.Connect("127.0.0.1:63999,abortConnect=false,connectTimeout=1");
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModeRedisLease(configuration, multiplexer);
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.Same(configuration, provider.GetRequiredService<IRuntimeLeaseRedisConnectionProvider>());
+    Assert.Same(multiplexer, provider.GetRequiredService<IConnectionMultiplexer>());
+    Assert.IsType<RuntimeLeaseServiceRedis>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
+  }
+
+  [Fact]
+  public void AddHAModeEtcdLease_WithSharedClient_RegistersLeaseServiceOnly() {
+    var configuration = new TestEtcdProvider();
+    var client = new EtcdClient("http://127.0.0.1:2379");
+    var services = new ServiceCollection()
+      .AddLogging()
+      .AddHAModeEtcdLease(configuration, client);
+
+    var provider = services.BuildServiceProvider();
+
+    Assert.Same(configuration, provider.GetRequiredService<IRuntimeLeaseEtcdConnectionProvider>());
+    Assert.Same(client, provider.GetRequiredService<EtcdClient>());
+    Assert.IsType<RuntimeLeaseServiceEtcd>(provider.GetRequiredService<IRuntimeLeaseService>());
+    Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<IRuntimeInstanceId>());
   }
 
   [Fact]
