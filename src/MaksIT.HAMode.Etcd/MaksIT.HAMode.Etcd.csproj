@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <PackageId>MaksIT.HAMode.Etcd</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Maksym Sadovnychyy</Authors>
+    <Company>MAKS-IT</Company>
+    <Product>MaksIT.HAMode</Product>
+    <Copyright>Copyright © Maksym Sadovnychyy (MAKS-IT)</Copyright>
+    <Description>etcd runtime lease implementation for MaksIT HA mode, using transactions and lease-backed keys.</Description>
+    <PackageTags>dotnet;ha;high-availability;runtime;lease;coordination;etcd;grpc;kubernetes</PackageTags>
+    <PackageProjectUrl>https://github.com/MAKS-IT-COM/maksit-hamode</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MAKS-IT-COM/maksit-hamode</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReleaseNotes>See CHANGELOG.md in the package and repository releases.</PackageReleaseNotes>
+    <RequireLicenseAcceptance>false</RequireLicenseAcceptance>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dotnet-etcd" Version="8.1.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.33.2" />
+    <PackageReference Include="MaksIT.Results" Version="2.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MaksIT.HAMode.Abstractions\MaksIT.HAMode.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md" Pack="true" PackagePath="\" Link="LICENSE.md" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+</Project>
