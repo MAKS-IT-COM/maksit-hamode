@@ -12,20 +12,30 @@ namespace MaksIT.HAMode.Etcd;
 /// </summary>
 public sealed class RuntimeLeaseServiceEtcd(
   IRuntimeLeaseEtcdConnectionProvider connectionProvider,
-  ILogger<RuntimeLeaseServiceEtcd> logger
+  ILogger<RuntimeLeaseServiceEtcd> logger,
+  EtcdClient? sharedClient = null
 ) : IRuntimeLeaseService {
   private readonly Lazy<EtcdClient> _client = new(() =>
-    !string.IsNullOrWhiteSpace(connectionProvider.Username) && connectionProvider.Password is not null
+    sharedClient ??
+    (!string.IsNullOrWhiteSpace(connectionProvider.Username) && connectionProvider.Password is not null
       ? new EtcdClient(connectionProvider.Endpoints, connectionProvider.Username, connectionProvider.Password)
-      : new EtcdClient(connectionProvider.Endpoints));
+      : new EtcdClient(connectionProvider.Endpoints)));
 
   public async Task<Result<bool>> TryAcquireAsync(string leaseName, string holderId, TimeSpan ttl, CancellationToken cancellationToken = default) {
     if (string.IsNullOrWhiteSpace(leaseName))
+
       return Result<bool>.BadRequest(false, "leaseName is required.");
     if (string.IsNullOrWhiteSpace(holderId))
       return Result<bool>.BadRequest(false, "holderId is required.");
+
     if (ttl <= TimeSpan.Zero)
       return Result<bool>.BadRequest(false, "ttl must be positive.");
+
+    if (sharedClient is null && string.IsNullOrWhiteSpace(connectionProvider.Endpoints))
+      return Result<bool>.BadRequest(false, "etcd endpoints are required.");
+
+    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
+      return Result<bool>.BadRequest(false, "etcd key prefix is required.");
 
     try {
       var key = BuildKey(leaseName);
@@ -87,8 +97,15 @@ public sealed class RuntimeLeaseServiceEtcd(
   public async Task<Result> ReleaseAsync(string leaseName, string holderId, CancellationToken cancellationToken = default) {
     if (string.IsNullOrWhiteSpace(leaseName))
       return Result.BadRequest("leaseName is required.");
+
     if (string.IsNullOrWhiteSpace(holderId))
       return Result.BadRequest("holderId is required.");
+
+    if (sharedClient is null && string.IsNullOrWhiteSpace(connectionProvider.Endpoints))
+      return Result.BadRequest("etcd endpoints are required.");
+      
+    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
+      return Result.BadRequest("etcd key prefix is required.");
 
     try {
       var keyBytes = ByteString.CopyFromUtf8(BuildKey(leaseName));

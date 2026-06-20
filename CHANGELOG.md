@@ -5,14 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-06-20
+
+### Changed
+- PostgreSQL lease service now uses configurable `Schema` and `Table` from `IRuntimeLeaseConnectionStringProvider` instead of hardcoded `public.app_runtime_leases`.
+- Added explicit missing-table error handling for PostgreSQL lease acquire/release operations.
+- Added provider-configuration validation for Redis and etcd services (required connection settings and key prefix).
+- Added DI overloads to reuse host-managed clients (`NpgsqlDataSource`, `IConnectionMultiplexer`, `EtcdClient`) for lease services.
+
 ## [1.0.1] - 2026-06-20
 
 ### Added
 - DI registration extensions in `MaksIT.HAMode.Extensions.ServiceCollectionExtensions` for runtime instance id and backend-specific lease service wiring (`PostgreSql`, `Redis`, `Etcd`).
+- DI extension overloads that accept concrete configuration instances implementing HAMode configuration interfaces.
+- Root connector configuration interface `IRuntimeLeaseConnectionProvider`, with connector-specific interfaces inheriting it.
 
 ### Changed
 - Updated package/release setup to publish `MaksIT.HAMode` as the primary distributable library for version `1.0.1`.
 - Updated several dependency versions across HAMode projects.
+- Updated README backend examples to use host-defined configuration interfaces and concrete classes, instead of direct `IConfiguration["..."]` access.
 
 ## [1.0.0] - 2026-06-20
 

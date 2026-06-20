@@ -11,6 +11,7 @@ Reusable high-availability runtime coordination library for MaksIT services.
   - `MaksIT.HAMode.Abstractions` namespace:
     - `IRuntimeInstanceId`
     - `IRuntimeLeaseService`
+    - `IRuntimeLeaseConnectionProvider` (root marker interface)
     - `IRuntimeLeaseConnectionStringProvider`
     - `IRuntimeLeaseRedisConnectionProvider`
     - `IRuntimeLeaseEtcdConnectionProvider`
@@ -33,7 +34,8 @@ Reusable high-availability runtime coordination library for MaksIT services.
 
 `RuntimeLeaseServiceNpgsql` expects:
 
-- table: `public.app_runtime_leases`
+- table: configurable via `IRuntimeLeaseConnectionStringProvider.Schema` and `IRuntimeLeaseConnectionStringProvider.Table`
+  - defaults: `public.app_runtime_leases`
 - columns:
   - `lease_name` (text, PK)
   - `holder_id` (text)
@@ -41,13 +43,15 @@ Reusable high-availability runtime coordination library for MaksIT services.
   - `acquired_at_utc` (timestamptz)
   - `expires_at_utc` (timestamptz)
 
+If the configured table does not exist, PostgreSQL lease operations return an explicit internal error explaining which table is missing.
+
 ## Usage examples
 
 ### Install package
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
+  <PackageReference Include="MaksIT.HAMode" />
 </ItemGroup>
 ```
 
@@ -65,11 +69,28 @@ builder.Services.AddHAModeRuntimeInstanceId();
 using MaksIT.HAMode.Abstractions;
 using MaksIT.HAMode.Extensions;
 
-public sealed class MyPgLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseConnectionStringProvider {
-  public string ConnectionString => cfg["Configuration:Engine:ConnectionString"]!;
+// Host project contract.
+public interface IMyPgLeaseConfiguration : IRuntimeLeaseConnectionStringProvider;
+
+// Host project concrete configuration.
+public sealed class MyPgLeaseConfiguration : IMyPgLeaseConfiguration {
+  public required string ConnectionString { get; init; }
+  public string Schema { get; init; } = "ha";
+  public string Table { get; init; } = "runtime_leases";
 }
 
-builder.Services.AddHAModePostgreSql<MyPgLeaseConnectionProvider>();
+IMyPgLeaseConfiguration pgConfiguration = new MyPgLeaseConfiguration {
+  ConnectionString = "<your-connection-string>"
+};
+
+builder.Services.AddHAModePostgreSql(pgConfiguration);
+```
+
+If you already manage a pooled PostgreSQL client in the host, pass the shared `NpgsqlDataSource`:
+
+```csharp
+var dataSource = new NpgsqlDataSourceBuilder("<your-connection-string>").Build();
+builder.Services.AddHAModePostgreSql(pgConfiguration, dataSource);
 ```
 
 ### Redis backend
@@ -78,13 +99,30 @@ builder.Services.AddHAModePostgreSql<MyPgLeaseConnectionProvider>();
 using MaksIT.HAMode.Abstractions;
 using MaksIT.HAMode.Extensions;
 
-public sealed class MyRedisLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseRedisConnectionProvider {
-  public string Configuration => cfg["Configuration:Redis:ConnectionString"]!;
-  public string KeyPrefix => "my-app/runtime-leases:";
+// Host project contract.
+public interface IMyRedisLeaseConfiguration : IRuntimeLeaseRedisConnectionProvider;
+
+// Host project concrete configuration.
+public sealed class MyRedisLeaseConfiguration : IMyRedisLeaseConfiguration {
+  public required string Configuration { get; init; }
+  public string KeyPrefix { get; init; } = "my-app/runtime-leases:";
 }
 
-builder.Services.AddHAModeRedis<MyRedisLeaseConnectionProvider>();
+IMyRedisLeaseConfiguration redisConfiguration = new MyRedisLeaseConfiguration {
+  Configuration = "<your-redis-connection-string>"
+};
+
+builder.Services.AddHAModeRedis(redisConfiguration);
 ```
+
+If you already manage a shared Redis client in the host, pass the same `IConnectionMultiplexer`:
+
+```csharp
+var multiplexer = await ConnectionMultiplexer.ConnectAsync("<your-redis-connection-string>");
+builder.Services.AddHAModeRedis(redisConfiguration, multiplexer);
+```
+
+Redis is schema-less, so there is no table bootstrap requirement; lease keys are isolated by `KeyPrefix`.
 
 ### etcd backend
 
@@ -92,15 +130,34 @@ builder.Services.AddHAModeRedis<MyRedisLeaseConnectionProvider>();
 using MaksIT.HAMode.Abstractions;
 using MaksIT.HAMode.Extensions;
 
-public sealed class MyEtcdLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseEtcdConnectionProvider {
-  public string Endpoints => cfg["Configuration:Etcd:Endpoints"]!; // ex: http://etcd:2379
-  public string? Username => cfg["Configuration:Etcd:Username"];
-  public string? Password => cfg["Configuration:Etcd:Password"];
-  public string KeyPrefix => "my-app/runtime-leases/";
+// Host project contract.
+public interface IMyEtcdLeaseConfiguration : IRuntimeLeaseEtcdConnectionProvider;
+
+// Host project concrete configuration.
+public sealed class MyEtcdLeaseConfiguration : IMyEtcdLeaseConfiguration {
+  public required string Endpoints { get; init; } // ex: http://etcd:2379
+  public string? Username { get; init; }
+  public string? Password { get; init; }
+  public string KeyPrefix { get; init; } = "my-app/runtime-leases/";
 }
 
-builder.Services.AddHAModeEtcd<MyEtcdLeaseConnectionProvider>();
+IMyEtcdLeaseConfiguration etcdConfiguration = new MyEtcdLeaseConfiguration {
+  Endpoints = "http://etcd:2379",
+  Username = null,
+  Password = null
+};
+
+builder.Services.AddHAModeEtcd(etcdConfiguration);
 ```
+
+If you already manage a shared etcd client in the host, pass the same `EtcdClient`:
+
+```csharp
+var etcdClient = new EtcdClient("http://etcd:2379");
+builder.Services.AddHAModeEtcd(etcdConfiguration, etcdClient);
+```
+
+etcd is key-space based, so there is no table bootstrap requirement; lease keys are isolated by `KeyPrefix`.
 
 ### Runtime acquire/release flow
 
@@ -145,7 +202,7 @@ In `MaksIT.Vault.Engine.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
+  <PackageReference Include="MaksIT.HAMode" />
 </ItemGroup>
 ```
 
@@ -207,7 +264,7 @@ In `MaksIT.CertsUI.Engine.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
+  <PackageReference Include="MaksIT.HAMode" />
 </ItemGroup>
 ```
 
