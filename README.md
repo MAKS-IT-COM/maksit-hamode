@@ -7,6 +7,7 @@ Reusable high-availability runtime coordination library for MaksIT services.
 ## Packages
 
 - `MaksIT.HAMode` (single NuGet package)
+  - `MaksIT.HAMode.Extensions.ServiceCollectionExtensions`
   - `MaksIT.HAMode.Abstractions` namespace:
     - `IRuntimeInstanceId`
     - `IRuntimeLeaseService`
@@ -46,52 +47,50 @@ Reusable high-availability runtime coordination library for MaksIT services.
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="0.1.0" />
+  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
 </ItemGroup>
 ```
 
 ### Shared runtime instance id
 
 ```csharp
-using MaksIT.HAMode.Abstractions;
+using MaksIT.HAMode.Extensions;
 
-builder.Services.AddSingleton<IRuntimeInstanceId, RuntimeInstanceIdProvider>();
+builder.Services.AddHAModeRuntimeInstanceId();
 ```
 
 ### PostgreSQL backend
 
 ```csharp
 using MaksIT.HAMode.Abstractions;
-using MaksIT.HAMode.PostgreSql;
+using MaksIT.HAMode.Extensions;
 
 public sealed class MyPgLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseConnectionStringProvider {
   public string ConnectionString => cfg["Configuration:Engine:ConnectionString"]!;
 }
 
-builder.Services.AddSingleton<IRuntimeLeaseConnectionStringProvider, MyPgLeaseConnectionProvider>();
-builder.Services.AddSingleton<IRuntimeLeaseService, RuntimeLeaseServiceNpgsql>();
+builder.Services.AddHAModePostgreSql<MyPgLeaseConnectionProvider>();
 ```
 
 ### Redis backend
 
 ```csharp
 using MaksIT.HAMode.Abstractions;
-using MaksIT.HAMode.Redis;
+using MaksIT.HAMode.Extensions;
 
 public sealed class MyRedisLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseRedisConnectionProvider {
   public string Configuration => cfg["Configuration:Redis:ConnectionString"]!;
   public string KeyPrefix => "my-app/runtime-leases:";
 }
 
-builder.Services.AddSingleton<IRuntimeLeaseRedisConnectionProvider, MyRedisLeaseConnectionProvider>();
-builder.Services.AddSingleton<IRuntimeLeaseService, RuntimeLeaseServiceRedis>();
+builder.Services.AddHAModeRedis<MyRedisLeaseConnectionProvider>();
 ```
 
 ### etcd backend
 
 ```csharp
 using MaksIT.HAMode.Abstractions;
-using MaksIT.HAMode.Etcd;
+using MaksIT.HAMode.Extensions;
 
 public sealed class MyEtcdLeaseConnectionProvider(IConfiguration cfg) : IRuntimeLeaseEtcdConnectionProvider {
   public string Endpoints => cfg["Configuration:Etcd:Endpoints"]!; // ex: http://etcd:2379
@@ -100,8 +99,7 @@ public sealed class MyEtcdLeaseConnectionProvider(IConfiguration cfg) : IRuntime
   public string KeyPrefix => "my-app/runtime-leases/";
 }
 
-builder.Services.AddSingleton<IRuntimeLeaseEtcdConnectionProvider, MyEtcdLeaseConnectionProvider>();
-builder.Services.AddSingleton<IRuntimeLeaseService, RuntimeLeaseServiceEtcd>();
+builder.Services.AddHAModeEtcd<MyEtcdLeaseConnectionProvider>();
 ```
 
 ### Runtime acquire/release flow
@@ -147,7 +145,7 @@ In `MaksIT.Vault.Engine.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="0.1.0" />
+  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
 </ItemGroup>
 ```
 
@@ -209,7 +207,7 @@ In `MaksIT.CertsUI.Engine.csproj`:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="MaksIT.HAMode" Version="0.1.0" />
+  <PackageReference Include="MaksIT.HAMode" Version="1.0.1" />
 </ItemGroup>
 ```
 

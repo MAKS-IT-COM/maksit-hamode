@@ -34,9 +34,9 @@
 
   <ItemGroup>
     <PackageReference Include="dotnet-etcd" Version="8.1.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.33.2" />
+    <PackageReference Include="Google.Protobuf" Version="3.35.1" />
     <PackageReference Include="MaksIT.Results" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-preview.5.26302.115" />
   </ItemGroup>
 
   <ItemGroup>

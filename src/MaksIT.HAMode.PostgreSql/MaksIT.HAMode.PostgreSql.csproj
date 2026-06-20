@@ -34,7 +34,7 @@
 
   <ItemGroup>
     <PackageReference Include="MaksIT.Results" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-preview.5.26302.115" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
   </ItemGroup>
 
