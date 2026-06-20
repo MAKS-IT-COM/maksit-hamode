@@ -3,7 +3,7 @@ namespace MaksIT.HAMode.Abstractions;
 /// <summary>
 /// Supplies etcd connection settings for runtime lease persistence.
 /// </summary>
-public interface IRuntimeLeaseEtcdConnectionProvider {
+public interface IRuntimeLeaseEtcdConnectionProvider : IRuntimeLeaseConnectionProvider {
   /// <summary>Comma-separated etcd endpoint list (for example "http://localhost:2379").</summary>
   string Endpoints { get; }
 

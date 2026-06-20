@@ -3,7 +3,7 @@ namespace MaksIT.HAMode.Abstractions;
 /// <summary>
 /// Supplies Redis connection settings for runtime lease persistence.
 /// </summary>
-public interface IRuntimeLeaseRedisConnectionProvider {
+public interface IRuntimeLeaseRedisConnectionProvider : IRuntimeLeaseConnectionProvider {
   /// <summary>StackExchange.Redis configuration string.</summary>
   string Configuration { get; }
 
