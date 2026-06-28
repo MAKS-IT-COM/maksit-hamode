@@ -37,20 +37,11 @@ public sealed class RuntimeLeaseServiceRedis(
   private ConnectionMultiplexer? _ownedMultiplexer;
 
   public async Task<Result<bool>> TryAcquireAsync(string leaseName, string holderId, TimeSpan ttl, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
-      return Result<bool>.BadRequest(false, "leaseName is required.");
+    if (LeaseInputValidation.ValidateAcquireInputs(leaseName, holderId, ttl) is { } acquireValidation)
+      return acquireValidation;
 
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result<bool>.BadRequest(false, "holderId is required.");
-
-    if (ttl <= TimeSpan.Zero)
-      return Result<bool>.BadRequest(false, "ttl must be positive.");
-
-    if (sharedMultiplexer is null && string.IsNullOrWhiteSpace(connectionProvider.Configuration))
-      return Result<bool>.BadRequest(false, "redis configuration is required.");
-
-    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
-      return Result<bool>.BadRequest(false, "redis key prefix is required.");
+    if (LeaseInputValidation.ValidateRedisProvider(connectionProvider, sharedMultiplexer is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       var db = (await GetDatabaseAsync(cancellationToken).ConfigureAwait(false)).Database;
@@ -64,22 +55,16 @@ public sealed class RuntimeLeaseServiceRedis(
     }
     catch (Exception ex) {
       logger.LogError(ex, "Redis TryAcquire lease failed for {LeaseName}", leaseName);
-      return Result<bool>.InternalServerError(false, ["Lease acquire failed.", ex.Message]);
+      return LeaseResultErrors.AcquireFailed(ex);
     }
   }
 
   public async Task<Result> ReleaseAsync(string leaseName, string holderId, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
-      return Result.BadRequest("leaseName is required.");
+    if (LeaseInputValidation.ValidateReleaseInputs(leaseName, holderId) is { } releaseValidation)
+      return releaseValidation;
 
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result.BadRequest("holderId is required.");
-
-    if (sharedMultiplexer is null && string.IsNullOrWhiteSpace(connectionProvider.Configuration))
-      return Result.BadRequest("redis configuration is required.");
-      
-    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
-      return Result.BadRequest("redis key prefix is required.");
+    if (LeaseInputValidation.ValidateRedisProviderForRelease(connectionProvider, sharedMultiplexer is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       var db = (await GetDatabaseAsync(cancellationToken).ConfigureAwait(false)).Database;
@@ -89,7 +74,7 @@ public sealed class RuntimeLeaseServiceRedis(
     }
     catch (Exception ex) {
       logger.LogWarning(ex, "Redis Release lease failed for {LeaseName} (ignored).", leaseName);
-      return Result.InternalServerError(["Lease release failed.", ex.Message]);
+      return LeaseResultErrors.ReleaseFailed(ex);
     }
   }
 

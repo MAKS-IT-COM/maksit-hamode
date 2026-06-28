@@ -14,22 +14,11 @@ public sealed class RuntimeLeaseServiceNpgsql(
   NpgsqlDataSource? dataSource = null
 ) : IRuntimeLeaseService {
   public async Task<Result<bool>> TryAcquireAsync(string leaseName, string holderId, TimeSpan ttl, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
-      return Result<bool>.BadRequest(false, "leaseName is required.");
+    if (LeaseInputValidation.ValidateAcquireInputs(leaseName, holderId, ttl) is { } acquireValidation)
+      return acquireValidation;
 
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result<bool>.BadRequest(false, "holderId is required.");
-
-    if (ttl <= TimeSpan.Zero)
-      return Result<bool>.BadRequest(false, "ttl must be positive.");
-    if (dataSource is null && string.IsNullOrWhiteSpace(connectionStringProvider.ConnectionString))
-      return Result<bool>.BadRequest(false, "connection string is required.");
-
-    if (string.IsNullOrWhiteSpace(connectionStringProvider.Schema))
-      return Result<bool>.BadRequest(false, "schema is required.");
-      
-    if (string.IsNullOrWhiteSpace(connectionStringProvider.Table))
-      return Result<bool>.BadRequest(false, "table is required.");
+    if (LeaseInputValidation.ValidatePostgreSqlProvider(connectionStringProvider, dataSource is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       await using var conn = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -68,32 +57,20 @@ public sealed class RuntimeLeaseServiceNpgsql(
     catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UndefinedTable) {
       var qualifiedTableName = $"{connectionStringProvider.Schema}.{connectionStringProvider.Table}";
       logger.LogError(ex, "Lease table {TableName} was not found while acquiring lease {LeaseName}", qualifiedTableName, leaseName);
-      return Result<bool>.InternalServerError(false, [
-        $"Lease table '{qualifiedTableName}' was not found.",
-        "Create the table or set Schema/Table in the PostgreSQL connection provider."
-      ]);
+      return LeaseResultErrors.AcquireTableMissing(qualifiedTableName);
     }
     catch (Exception ex) {
       logger.LogError(ex, "TryAcquire lease failed for {LeaseName}", leaseName);
-      return Result<bool>.InternalServerError(false, ["Lease acquire failed.", ex.Message]);
+      return LeaseResultErrors.AcquireFailed(ex);
     }
   }
 
   public async Task<Result> ReleaseAsync(string leaseName, string holderId, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
-      return Result.BadRequest("leaseName is required.");
+    if (LeaseInputValidation.ValidateReleaseInputs(leaseName, holderId) is { } releaseValidation)
+      return releaseValidation;
 
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result.BadRequest("holderId is required.");
-
-    if (dataSource is null && string.IsNullOrWhiteSpace(connectionStringProvider.ConnectionString))
-      return Result.BadRequest("connection string is required.");
-
-    if (string.IsNullOrWhiteSpace(connectionStringProvider.Schema))
-      return Result.BadRequest("schema is required.");
-
-    if (string.IsNullOrWhiteSpace(connectionStringProvider.Table))
-      return Result.BadRequest("table is required.");
+    if (LeaseInputValidation.ValidatePostgreSqlProviderForRelease(connectionStringProvider, dataSource is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       await using var conn = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -114,14 +91,11 @@ public sealed class RuntimeLeaseServiceNpgsql(
     catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UndefinedTable) {
       var qualifiedTableName = $"{connectionStringProvider.Schema}.{connectionStringProvider.Table}";
       logger.LogWarning(ex, "Lease table {TableName} was not found while releasing lease {LeaseName}", qualifiedTableName, leaseName);
-      return Result.InternalServerError([
-        $"Lease table '{qualifiedTableName}' was not found.",
-        "Create the table or set Schema/Table in the PostgreSQL connection provider."
-      ]);
+      return LeaseResultErrors.ReleaseTableMissing(qualifiedTableName);
     }
     catch (Exception ex) {
       logger.LogWarning(ex, "Release lease failed for {LeaseName} (ignored).", leaseName);
-      return Result.InternalServerError(["Lease release failed.", ex.Message]);
+      return LeaseResultErrors.ReleaseFailed(ex);
     }
   }
 
