@@ -30,7 +30,8 @@ function Invoke-Plugin {
 
     Import-PluginDependency -ModuleName "Logging" -RequiredCommand "Write-Log"
     Import-PluginDependency -ModuleName "ScriptConfig" -RequiredCommand "Assert-Command"
-    Import-PluginDependency -ModuleName "EngineContext" -RequiredCommand "Resolve-RelativePaths"
+    Import-PluginDependency -ModuleName "EngineContext" -RequiredCommand "Set-EngineFact"
+    Import-PluginDependency -ModuleName "DotNetArtifactSupport" -RequiredCommand "Resolve-DotNetPackageArtifacts"
 
     $sharedSettings = $Settings.context
     $scriptDir = $sharedSettings.scriptDir
@@ -48,13 +49,12 @@ function Invoke-Plugin {
 
     if ($Settings.PSObject.Properties['artifactsDir'] -and -not [string]::IsNullOrWhiteSpace([string]$Settings.artifactsDir)) {
         $artifactsDirectory = [System.IO.Path]::GetFullPath((Join-Path $scriptDir ([string]$Settings.artifactsDir)))
+        Set-EngineState -Context $sharedSettings -Name 'artifactsDirectory' -Value $artifactsDirectory
+        Set-EngineState -Context $sharedSettings -Name 'releaseDir' -Value $artifactsDirectory
     }
     else {
         $artifactsDirectory = $sharedSettings.artifactsDirectory
     }
-    $releaseArchiveInputs = [System.Collections.Generic.List[string]]::new()
-    $packageFiles = [System.Collections.Generic.List[object]]::new()
-    $symbolsPackageFiles = [System.Collections.Generic.List[object]]::new()
 
     Assert-Command dotnet
 
@@ -68,88 +68,31 @@ function Invoke-Plugin {
         New-Item -ItemType Directory -Path $outputDir | Out-Null
     }
 
-    foreach ($packageProjectPath in @($projectFiles)) {
-        Write-Log -Level "STEP" -Message "Packing NuGet package: $([System.IO.Path]::GetFileName($packageProjectPath))"
-        $packStartedAt = Get-Date
-        $dotnetPackArguments = @(
-            'pack', $packageProjectPath, '-c', 'Release', '-o', $outputDir, '--nologo',
-            '-p:IncludeSymbols=true', '-p:SymbolPackageFormat=snupkg'
-        )
-        & dotnet @dotnetPackArguments
-        if ($LASTEXITCODE -ne 0) {
-            throw "dotnet pack failed for $packageProjectPath."
-        }
-
-        # Prefer files produced by this pack invocation; fallback to newest matching version.
-        $packageFile = $null
-        $newestNupkgWrite = [datetime]::MinValue
-        $nupkgCandidates = Get-ChildItem -Path $outputDir -Filter "*.nupkg"
-        foreach ($candidate in $nupkgCandidates) {
-            if (($candidate.Name -like "*$version*.nupkg") -and ($candidate.Name -notlike "*.symbols.nupkg") -and ($candidate.Name -notlike "*.snupkg")) {
-                $isFromThisPack = $candidate.LastWriteTime -ge $packStartedAt.AddSeconds(-2)
-                if ($isFromThisPack -and $candidate.LastWriteTime -gt $newestNupkgWrite) {
-                    $newestNupkgWrite = $candidate.LastWriteTime
-                    $packageFile = $candidate
-                }
-            }
-        }
-        if (-not $packageFile) {
-            foreach ($candidate in $nupkgCandidates) {
-                if (($candidate.Name -like "*$version*.nupkg") -and ($candidate.Name -notlike "*.symbols.nupkg") -and ($candidate.Name -notlike "*.snupkg")) {
-                    if ($candidate.LastWriteTime -gt $newestNupkgWrite) {
-                        $newestNupkgWrite = $candidate.LastWriteTime
-                        $packageFile = $candidate
-                    }
-                }
-            }
-        }
-
-        if (-not $packageFile) {
-            throw "Could not locate generated NuGet package for version $version in: $outputDir"
-        }
-
-        Write-Log -Level "OK" -Message "  Package ready: $($packageFile.FullName)"
-        [void]$packageFiles.Add($packageFile)
-        [void]$releaseArchiveInputs.Add($packageFile.FullName)
-
-        $symbolsPackageFile = $null
-        $newestSnupkgWrite = [datetime]::MinValue
-        $snupkgCandidates = Get-ChildItem -Path $outputDir -Filter "*.snupkg"
-        foreach ($candidate in $snupkgCandidates) {
-            if ($candidate.Name -like "*$version*.snupkg") {
-                $isFromThisPack = $candidate.LastWriteTime -ge $packStartedAt.AddSeconds(-2)
-                if ($isFromThisPack -and $candidate.LastWriteTime -gt $newestSnupkgWrite) {
-                    $newestSnupkgWrite = $candidate.LastWriteTime
-                    $symbolsPackageFile = $candidate
-                }
-            }
-        }
-        if (-not $symbolsPackageFile) {
-            foreach ($candidate in $snupkgCandidates) {
-                if ($candidate.Name -like "*$version*.snupkg") {
-                    if ($candidate.LastWriteTime -gt $newestSnupkgWrite) {
-                        $newestSnupkgWrite = $candidate.LastWriteTime
-                        $symbolsPackageFile = $candidate
-                    }
-                }
-            }
-        }
-
-        if ($symbolsPackageFile) {
-            Write-Log -Level "OK" -Message "  Symbols package ready: $($symbolsPackageFile.FullName)"
-            [void]$symbolsPackageFiles.Add($symbolsPackageFile)
-            [void]$releaseArchiveInputs.Add($symbolsPackageFile.FullName)
-        }
-        else {
-            Write-Log -Level "WARN" -Message "  Symbols package (.snupkg) not found for version $version."
-        }
+    # First path in the configured project list is the pack target.
+    $packageProjectPath = (@($projectFiles))[0]
+    Write-Log -Level "STEP" -Message "Packing NuGet package..."
+    $dotnetPackArguments = @(
+        'pack', $packageProjectPath, '-c', 'Release', '-o', $outputDir, '--nologo',
+        '-p:IncludeSymbols=true', '-p:SymbolPackageFormat=snupkg'
+    )
+    & dotnet @dotnetPackArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet pack failed for $packageProjectPath."
     }
 
-    $sharedSettings | Add-Member -NotePropertyName packageFile -NotePropertyValue (@($packageFiles)[0]) -Force
-    $sharedSettings | Add-Member -NotePropertyName symbolsPackageFile -NotePropertyValue (@($symbolsPackageFiles)[0]) -Force
-    $sharedSettings | Add-Member -NotePropertyName packageFiles -NotePropertyValue @($packageFiles) -Force
-    $sharedSettings | Add-Member -NotePropertyName symbolsPackageFiles -NotePropertyValue @($symbolsPackageFiles) -Force
-    $sharedSettings | Add-Member -NotePropertyName releaseArchiveInputs -NotePropertyValue @($releaseArchiveInputs) -Force
+    $resolved = Resolve-DotNetPackageArtifacts -ArtifactsDirectory $outputDir -Version $version
+
+    Write-Log -Level "OK" -Message "  Package ready: $($resolved.PackageFile.FullName)"
+    if ($resolved.SymbolsPackageFile) {
+        Write-Log -Level "OK" -Message "  Symbols package ready: $($resolved.SymbolsPackageFile.FullName)"
+    }
+    else {
+        Write-Log -Level "WARN" -Message "  Symbols package (.snupkg) not found for version $version."
+    }
+
+    Set-EngineFact -Context $sharedSettings -Namespace 'dotnet' -Name 'packageFile' -Value $resolved.PackageFile -Overwrite Replace -LegacyProperty 'packageFile'
+    Set-EngineFact -Context $sharedSettings -Namespace 'dotnet' -Name 'symbolsPackageFile' -Value $resolved.SymbolsPackageFile -Overwrite Replace -LegacyProperty 'symbolsPackageFile'
+    Set-EngineFact -Context $sharedSettings -Namespace 'release' -Name 'archiveInputs' -Value $resolved.ReleaseArchiveInputs -Overwrite Replace -LegacyProperty 'releaseArchiveInputs'
 }
 
 Export-ModuleMember -Function Invoke-Plugin

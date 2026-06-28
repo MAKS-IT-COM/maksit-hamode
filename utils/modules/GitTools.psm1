@@ -51,7 +51,36 @@ function Invoke-GitInternal {
         [string]$ErrorMessage = "Git command failed"
     )
 
+    if (-not (Get-Command Invoke-ExternalCommand -ErrorAction SilentlyContinue)) {
+        $srcDir = Split-Path $PSScriptRoot -Parent
+        $externalCandidates = @(
+            (Join-Path $PSScriptRoot 'ExternalCommandSupport.psm1'),
+            (Join-Path $srcDir 'plugins' 'Shared' 'ExternalCommandSupport.psm1')
+        )
+        foreach ($externalModule in $externalCandidates) {
+            if (Test-Path -LiteralPath $externalModule -PathType Leaf) {
+                Import-Module $externalModule -Global
+                break
+            }
+        }
+    }
+
     if ($CaptureOutput) {
+        if (Get-Command Invoke-ExternalCommand -ErrorAction SilentlyContinue) {
+            $output = Invoke-ExternalCommand -Name git -ArgumentList $Arguments -MergeErrorOutput
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+                Write-Error "$ErrorMessage (exit code: $exitCode)"
+                exit 1
+            }
+
+            if ($null -eq $output) {
+                return ""
+            }
+
+            return ($output -join "`n").Trim()
+        }
+
         $output = & git @Arguments 2>&1
         $exitCode = $LASTEXITCODE
         if ($exitCode -ne 0) {
@@ -66,7 +95,13 @@ function Invoke-GitInternal {
         return ($output -join "`n").Trim()
     }
 
-    & git @Arguments
+    if (Get-Command Invoke-ExternalCommand -ErrorAction SilentlyContinue) {
+        Invoke-ExternalCommand -Name git -ArgumentList $Arguments -MergeErrorOutput | Out-Null
+    }
+    else {
+        & git @Arguments
+    }
+
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
         Write-Error "$ErrorMessage (exit code: $exitCode)"
@@ -82,16 +117,7 @@ function Invoke-GitInternal {
 function Get-CurrentBranch {
     Write-GitToolsLogInternal -Level "STEP" -Message "Detecting current branch..."
 
-    $branch = & git rev-parse --abbrev-ref HEAD 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace([string]$branch) -or [string]$branch -eq 'HEAD') {
-        # Handle unborn branches (no commits yet) where rev-parse can fail.
-        $branch = & git symbolic-ref --short HEAD 2>$null
-    }
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace([string]$branch)) {
-        Write-Error "Could not determine current branch (repository may be detached or not initialized)."
-        exit 1
-    }
-    $branch = [string]$branch
+    $branch = Invoke-GitInternal -Arguments @("rev-parse", "--abbrev-ref", "HEAD") -CaptureOutput -ErrorMessage "Could not determine current branch"
     Write-GitToolsLogInternal -Level "OK" -Message "Branch: $branch"
     return $branch
 }
