@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-06-28
+
+### Changed
+- Centralized lease input validation and provider-configuration checks in shared `LeaseInputValidation` helpers used by PostgreSQL, Redis, and etcd lease services.
+- Centralized lease failure result mapping in `LeaseResultErrors`, using `MaksIT.Core` exception message extraction for acquire/release errors.
+- Updated dependencies: `MaksIT.Core` (`1.6.8`), `MaksIT.Results` (`2.0.3`), `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions` (`11.0.0-preview.5.26302.115`), and `StackExchange.Redis` (`3.0.7`).
+
 ## [1.0.4] - 2026-06-20
 
 ### Changed

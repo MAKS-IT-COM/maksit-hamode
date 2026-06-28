@@ -22,20 +22,11 @@ public sealed class RuntimeLeaseServiceEtcd(
       : new EtcdClient(connectionProvider.Endpoints)));
 
   public async Task<Result<bool>> TryAcquireAsync(string leaseName, string holderId, TimeSpan ttl, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
+    if (LeaseInputValidation.ValidateAcquireInputs(leaseName, holderId, ttl) is { } acquireValidation)
+      return acquireValidation;
 
-      return Result<bool>.BadRequest(false, "leaseName is required.");
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result<bool>.BadRequest(false, "holderId is required.");
-
-    if (ttl <= TimeSpan.Zero)
-      return Result<bool>.BadRequest(false, "ttl must be positive.");
-
-    if (sharedClient is null && string.IsNullOrWhiteSpace(connectionProvider.Endpoints))
-      return Result<bool>.BadRequest(false, "etcd endpoints are required.");
-
-    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
-      return Result<bool>.BadRequest(false, "etcd key prefix is required.");
+    if (LeaseInputValidation.ValidateEtcdProvider(connectionProvider, sharedClient is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       var key = BuildKey(leaseName);
@@ -90,22 +81,16 @@ public sealed class RuntimeLeaseServiceEtcd(
     }
     catch (Exception ex) {
       logger.LogError(ex, "etcd TryAcquire lease failed for {LeaseName}", leaseName);
-      return Result<bool>.InternalServerError(false, ["Lease acquire failed.", ex.Message]);
+      return LeaseResultErrors.AcquireFailed(ex);
     }
   }
 
   public async Task<Result> ReleaseAsync(string leaseName, string holderId, CancellationToken cancellationToken = default) {
-    if (string.IsNullOrWhiteSpace(leaseName))
-      return Result.BadRequest("leaseName is required.");
+    if (LeaseInputValidation.ValidateReleaseInputs(leaseName, holderId) is { } releaseValidation)
+      return releaseValidation;
 
-    if (string.IsNullOrWhiteSpace(holderId))
-      return Result.BadRequest("holderId is required.");
-
-    if (sharedClient is null && string.IsNullOrWhiteSpace(connectionProvider.Endpoints))
-      return Result.BadRequest("etcd endpoints are required.");
-      
-    if (string.IsNullOrWhiteSpace(connectionProvider.KeyPrefix))
-      return Result.BadRequest("etcd key prefix is required.");
+    if (LeaseInputValidation.ValidateEtcdProviderForRelease(connectionProvider, sharedClient is not null) is { } providerValidation)
+      return providerValidation;
 
     try {
       var keyBytes = ByteString.CopyFromUtf8(BuildKey(leaseName));
@@ -130,7 +115,7 @@ public sealed class RuntimeLeaseServiceEtcd(
     }
     catch (Exception ex) {
       logger.LogWarning(ex, "etcd Release lease failed for {LeaseName} (ignored).", leaseName);
-      return Result.InternalServerError(["Lease release failed.", ex.Message]);
+      return LeaseResultErrors.ReleaseFailed(ex);
     }
   }
 
