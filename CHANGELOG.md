@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-08-14
+
+### Changed
+- Updated dependencies: `dotnet-etcd` (`9.1.0`), `MaksIT.Core` (`1.6.9`), `MaksIT.Results` (`2.0.4`), `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions` (`10.0.11`), and `StackExchange.Redis` (`3.1.13`).
+- Synced RepoUtils (Community): removed obsolete `Update-RepoUtils` tooling and refreshed engine/module helpers.
+
 ## [1.0.6] - 2026-06-28
 
 ### Fixed
