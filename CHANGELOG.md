@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-08-18
+
+### Changed
+- Migrated tests to xunit.v3 `4.0` and Microsoft Testing Platform only (`src/global.json` `test.runner` next to the `.slnx`; no VSTest, `coverlet.collector`, `Microsoft.NET.Test.Sdk`, or `xunit.runner.visualstudio`). Coverage now uses `coverlet.MTP`; TestRunner always passes `--coverlet` scoped to `[MaksIT.*]*`.
+
 ## [1.0.7] - 2026-08-14
 
 ### Changed

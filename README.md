@@ -2,9 +2,9 @@
 
 Reusable high-availability runtime coordination library for MaksIT services.
 
-![Line Coverage](https://img.shields.io/badge/Line%20Coverage-57.1%25-yellowgreen)
-![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-49.1%25-yellowgreen)
-![Method Coverage](https://img.shields.io/badge/Method%20Coverage-70.7%25-green)
+![Line Coverage](https://img.shields.io/badge/Line%20Coverage-57%25-yellowgreen)
+![Branch Coverage](https://img.shields.io/badge/Branch%20Coverage-50.9%25-yellowgreen)
+![Method Coverage](https://img.shields.io/badge/Method%20Coverage-69.6%25-green)
 
 ## Packages
 
