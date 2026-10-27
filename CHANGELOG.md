@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-10-27
+
+### Changed
+- Updated dependencies: `Google.Protobuf` (`3.36.2`), `MaksIT.Core` (`1.6.14`), `MaksIT.Results` (`2.0.6`), `Microsoft.Extensions.DependencyInjection.Abstractions` and `Microsoft.Extensions.Logging.Abstractions` (`10.0.14`), and `StackExchange.Redis` (`3.4.20`). Test stack: `coverlet.MTP` (`10.1.0`), `Microsoft.Extensions.DependencyInjection` / `Logging` (`10.0.14`), and `xunit.v3` (`4.0.2`).
+- Synced RepoUtils: refreshed release engine/plugins (vault support, coverage collect, container probe, package artifact discovery), removed unused Npm plugins, and tightened DotNet publish/pack/version helpers.
+- Added GitHub Actions workflow to pack and publish NuGet on `v*` tags via OIDC (`NuGet/login`).
+
 ## [1.0.8] - 2026-08-18
 
 ### Changed
